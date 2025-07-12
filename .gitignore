@@ -34,3 +34,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Folder untuk dokumentasi dan catatan proyek lokal
+/project-docs/
+GEMINI.md

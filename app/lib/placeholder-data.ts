@@ -144,4 +144,19 @@ const revenue = [
   { month: 'Dec', revenue: 4800 },
 ];
 
-export { users, customers, invoices, revenue };
+export const products = [
+  {
+    id: "bolu-cokelat",
+    name: "Bolu Cokelat Klasik",
+    description: "Bolu cokelat lembut dengan taburan meses premium.",
+    price: 50000,
+  },
+  {
+    id: "nastar-premium",
+    name: "Nastar Premium Wisman",
+    description: "Kue nastar renyah dengan isian selai nanas asli.",
+    price: 120000,
+  },
+];
+
+export { users, customers, invoices, revenue, products };
