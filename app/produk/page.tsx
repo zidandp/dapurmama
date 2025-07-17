@@ -1,7 +1,24 @@
-import { products } from '@/app/lib/placeholder-data';
 import ProductCard from '@/app/ui/produk/product-card';
+import { Product } from '@/app/lib/definitions';
 
-export default function ProdukPage() {
+// Fungsi untuk mengambil data produk dari API
+// Kita menambahkan { cache: 'no-store' } untuk memastikan data selalu baru (dinamis)
+async function getProducts(): Promise<Product[]> {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/produk`, {
+    cache: 'no-store',
+  });
+
+  if (!res.ok) {
+    // Ini akan menampilkan halaman error bawaan Next.js
+    throw new Error('Gagal mengambil data produk dari API');
+  }
+
+  return res.json();
+}
+
+export default async function ProdukPage() {
+  const products = await getProducts();
+
   return (
     <main className="container mx-auto px-6 py-12">
       <h1 className="text-4xl font-bold text-center text-gray-800 mb-2">
