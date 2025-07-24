@@ -1,6 +1,6 @@
 // app/not-found.tsx
-import Link from 'next/link';
-import { BookOpenIcon } from '@heroicons/react/24/outline';
+import Link from "next/link";
+import { BookOpenIcon } from "lucide-react";
 
 export default function NotFound() {
   return (
