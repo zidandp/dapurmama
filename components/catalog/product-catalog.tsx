@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { categories } from "@/lib/data"; // kategori boleh tetap statis
 import { ProductCard } from "@/components/products/product-card";
 import { useSearchParams } from "next/navigation";
+import type { Product } from "@/lib/types"; // pastikan import tipe Product
 
 export function ProductCatalog() {
   const searchParams = useSearchParams();
@@ -20,7 +21,7 @@ export function ProductCatalog() {
   const [lastScrollY, setLastScrollY] = useState(0);
   const mobileDrawerRef = useRef<HTMLDivElement>(null);
   const desktopPanelRef = useRef<HTMLDivElement>(null);
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Fetch data produk dari API
