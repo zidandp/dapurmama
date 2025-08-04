@@ -1,88 +1,117 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { Search, Filter, X, ChevronRight } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { products, categories } from '@/lib/data';
-import { ProductCard } from '@/components/products/product-card';
-import { useSearchParams } from 'next/navigation';
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { Search, Filter, X, ChevronRight } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { categories } from "@/lib/data"; // kategori boleh tetap statis
+import { ProductCard } from "@/components/products/product-card";
+import { useSearchParams } from "next/navigation";
+import type { Product } from "@/lib/types"; // pastikan import tipe Product
 
 export function ProductCatalog() {
   const searchParams = useSearchParams();
-  const initialCategory = searchParams.get('category') || 'Semua';
-  
-  const [searchTerm, setSearchTerm] = useState('');
+  const initialCategory = searchParams.get("category") || "Semua";
+
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [isDesktopFilterOpen, setIsDesktopFilterOpen] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
   const mobileDrawerRef = useRef<HTMLDivElement>(null);
   const desktopPanelRef = useRef<HTMLDivElement>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch data produk dari API
+  useEffect(() => {
+    async function fetchProducts() {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/products");
+        const data = await res.json();
+        setProducts(data);
+      } catch (err) {
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProducts();
+  }, []);
 
   const filteredProducts = useMemo(() => {
     let filtered = products;
 
     // Filter by category
-    if (selectedCategory !== 'Semua') {
-      filtered = filtered.filter(product => product.category === selectedCategory);
+    if (selectedCategory !== "Semua") {
+      filtered = filtered.filter(
+        (product) => product.category === selectedCategory
+      );
     }
 
     // Filter by search term
     if (searchTerm) {
-      filtered = filtered.filter(product =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (product) =>
+          product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          product.description.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     return filtered;
-  }, [searchTerm, selectedCategory]);
+  }, [products, searchTerm, selectedCategory]);
 
   // Auto-close filters on scroll down
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      
+
       // Close mobile filter when scrolling down
       if (currentScrollY > lastScrollY && isMobileFilterOpen) {
         setIsMobileFilterOpen(false);
       }
-      
+
       setLastScrollY(currentScrollY);
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY, isMobileFilterOpen]);
 
   // Close filters when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (mobileDrawerRef.current && !mobileDrawerRef.current.contains(event.target as Node)) {
+      if (
+        mobileDrawerRef.current &&
+        !mobileDrawerRef.current.contains(event.target as Node)
+      ) {
         setIsMobileFilterOpen(false);
       }
-      if (desktopPanelRef.current && !desktopPanelRef.current.contains(event.target as Node)) {
+      if (
+        desktopPanelRef.current &&
+        !desktopPanelRef.current.contains(event.target as Node)
+      ) {
         setIsDesktopFilterOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // Handle escape key to close filters
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         setIsMobileFilterOpen(false);
         setIsDesktopFilterOpen(false);
       }
     };
 
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
   }, []);
 
   const handleCategorySelect = (categoryName: string) => {
@@ -93,7 +122,7 @@ export function ProductCatalog() {
 
   const getActiveFiltersCount = useCallback(() => {
     let count = 0;
-    if (selectedCategory !== 'Semua') count++;
+    if (selectedCategory !== "Semua") count++;
     return count;
   }, [selectedCategory]);
 
@@ -121,7 +150,7 @@ export function ProductCatalog() {
               className="pl-10 btn-touch h-10 sm:h-11"
             />
           </div>
-          
+
           {/* Filter Button */}
           <div className="relative">
             <Button
@@ -151,13 +180,13 @@ export function ProductCatalog() {
       {isMobileFilterOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           {/* Backdrop */}
-          <div 
+          <div
             className="absolute inset-0 bg-background/80 backdrop-blur-sm"
             onClick={() => setIsMobileFilterOpen(false)}
           />
-          
+
           {/* Drawer */}
-          <div 
+          <div
             ref={mobileDrawerRef}
             className="absolute right-0 top-0 h-full w-80 max-w-[85vw] bg-background border-l border-border shadow-xl animate-slide-in-right"
           >
@@ -191,8 +220,8 @@ export function ProductCatalog() {
                           onClick={() => handleCategorySelect(category.name)}
                           className={`w-full text-left px-3 py-2.5 rounded-lg transition-colors btn-touch flex items-center justify-between ${
                             selectedCategory === category.name
-                              ? 'bg-primary text-primary-foreground'
-                              : 'hover:bg-accent hover:text-accent-foreground'
+                              ? "bg-primary text-primary-foreground"
+                              : "hover:bg-accent hover:text-accent-foreground"
                           }`}
                         >
                           <span>{category.name}</span>
@@ -206,13 +235,21 @@ export function ProductCatalog() {
 
                   {/* Future filters can be added here */}
                   <div>
-                    <h3 className="font-medium mb-3 text-muted-foreground">Harga</h3>
-                    <p className="text-sm text-muted-foreground">Segera hadir...</p>
+                    <h3 className="font-medium mb-3 text-muted-foreground">
+                      Harga
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Segera hadir...
+                    </p>
                   </div>
-                  
+
                   <div>
-                    <h3 className="font-medium mb-3 text-muted-foreground">Rating</h3>
-                    <p className="text-sm text-muted-foreground">Segera hadir...</p>
+                    <h3 className="font-medium mb-3 text-muted-foreground">
+                      Rating
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Segera hadir...
+                    </p>
                   </div>
                 </div>
               </div>
@@ -222,8 +259,8 @@ export function ProductCatalog() {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setSelectedCategory('Semua');
-                    setSearchTerm('');
+                    setSelectedCategory("Semua");
+                    setSearchTerm("");
                   }}
                   className="w-full btn-touch"
                 >
@@ -238,7 +275,7 @@ export function ProductCatalog() {
       {/* Desktop Filter Panel */}
       <div className="hidden md:block relative">
         {isDesktopFilterOpen && (
-          <div 
+          <div
             ref={desktopPanelRef}
             className="absolute left-0 top-0 w-80 bg-background border border-border rounded-lg shadow-lg z-30 animate-slide-in-left"
           >
@@ -268,7 +305,11 @@ export function ProductCatalog() {
                     {categories.map((category) => (
                       <Button
                         key={category.id}
-                        variant={selectedCategory === category.name ? 'default' : 'outline'}
+                        variant={
+                          selectedCategory === category.name
+                            ? "default"
+                            : "outline"
+                        }
                         size="sm"
                         onClick={() => handleCategorySelect(category.name)}
                         className="btn-touch text-sm h-9 justify-start"
@@ -281,21 +322,29 @@ export function ProductCatalog() {
 
                 {/* Future filters */}
                 <div>
-                  <h3 className="font-medium mb-3 text-muted-foreground">Harga</h3>
-                  <p className="text-sm text-muted-foreground">Segera hadir...</p>
+                  <h3 className="font-medium mb-3 text-muted-foreground">
+                    Harga
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Segera hadir...
+                  </p>
                 </div>
-                
+
                 <div>
-                  <h3 className="font-medium mb-3 text-muted-foreground">Rating</h3>
-                  <p className="text-sm text-muted-foreground">Segera hadir...</p>
+                  <h3 className="font-medium mb-3 text-muted-foreground">
+                    Rating
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Segera hadir...
+                  </p>
                 </div>
 
                 {/* Reset Button */}
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setSelectedCategory('Semua');
-                    setSearchTerm('');
+                    setSelectedCategory("Semua");
+                    setSearchTerm("");
                   }}
                   className="w-full btn-touch"
                 >
@@ -308,13 +357,13 @@ export function ProductCatalog() {
       </div>
 
       {/* Active Filters Display */}
-      {(selectedCategory !== 'Semua' || searchTerm) && (
+      {(selectedCategory !== "Semua" || searchTerm) && (
         <div className="mb-4 flex flex-wrap gap-2">
-          {selectedCategory !== 'Semua' && (
+          {selectedCategory !== "Semua" && (
             <Badge variant="secondary" className="flex items-center gap-1">
               {selectedCategory}
               <button
-                onClick={() => setSelectedCategory('Semua')}
+                onClick={() => setSelectedCategory("Semua")}
                 className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
               >
                 <X className="h-3 w-3" />
@@ -325,7 +374,7 @@ export function ProductCatalog() {
             <Badge variant="secondary" className="flex items-center gap-1">
               "{searchTerm}"
               <button
-                onClick={() => setSearchTerm('')}
+                onClick={() => setSearchTerm("")}
                 className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
               >
                 <X className="h-3 w-3" />
@@ -336,35 +385,55 @@ export function ProductCatalog() {
       )}
 
       {/* Products Grid */}
-      <div className={`grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 transition-all duration-300 ${
-        isDesktopFilterOpen ? 'md:ml-84' : ''
-      }`}>
-        {filteredProducts.map((product, index) => (
-          <div 
-            key={product.id}
-            className="animate-fade-in"
-            style={{ animationDelay: `${index * 0.1}s` }}
-          >
-            <ProductCard product={product} />
+      <div
+        className={`grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 transition-all duration-300 ${
+          isDesktopFilterOpen ? "md:ml-84" : ""
+        }`}
+      >
+        {loading ? (
+          <div className="col-span-full text-center py-16 animate-fade-in transition-all duration-300">
+            <div className="text-6xl mb-4">⚙️</div>
+            <h3 className="text-xl font-semibold mb-2">
+              Sedang memuat produk...
+            </h3>
+            <p className="text-muted-foreground mb-6">
+              Harap tunggu sebentar, sedang mengambil data produk dari server.
+            </p>
           </div>
-        ))}
+        ) : filteredProducts.length === 0 ? (
+          <div
+            className={`text-center py-16 animate-fade-in transition-all duration-300 ${
+              isDesktopFilterOpen ? "md:ml-84" : ""
+            }`}
+          >
+            <div className="text-6xl mb-4">🔍</div>
+            <h3 className="text-xl font-semibold mb-2">
+              Produk Tidak Ditemukan
+            </h3>
+            <p className="text-muted-foreground mb-6">
+              Coba ubah kata kunci pencarian atau filter kategori.
+            </p>
+            <Button
+              onClick={() => {
+                setSearchTerm("");
+                setSelectedCategory("Semua");
+              }}
+            >
+              Reset Filter
+            </Button>
+          </div>
+        ) : (
+          filteredProducts.map((product, index) => (
+            <div
+              key={product.id}
+              className="animate-fade-in"
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
+              <ProductCard product={product} />
+            </div>
+          ))
+        )}
       </div>
-
-      {/* Empty State */}
-      {filteredProducts.length === 0 && (
-        <div className={`text-center py-16 animate-fade-in transition-all duration-300 ${
-          isDesktopFilterOpen ? 'md:ml-84' : ''
-        }`}>
-          <div className="text-6xl mb-4">🔍</div>
-          <h3 className="text-xl font-semibold mb-2">Produk Tidak Ditemukan</h3>
-          <p className="text-muted-foreground mb-6">
-            Coba ubah kata kunci pencarian atau filter kategori.
-          </p>
-          <Button onClick={() => { setSearchTerm(''); setSelectedCategory('Semua'); }}>
-            Reset Filter
-          </Button>
-        </div>
-      )}
     </div>
   );
 }

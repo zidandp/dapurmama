@@ -38,3 +38,5 @@ next-env.d.ts
 # Folder untuk dokumentasi dan catatan proyek lokal
 /project-docs/
 GEMINI.md
+docs
+/lib/generated/prisma

@@ -1,38 +1,107 @@
-# Cara Mengakses Halaman Manajemen Produk (CRUD)
+# DapurMama - Manajemen Produk (CRUD)
 
-Untuk meninjau dan menguji fungsionalitas Create, Read, Update, dan Delete (CRUD) pada produk, ikuti langkah-langkah berikut:
+Aplikasi ini menyediakan fitur CRUD (Create, Read, Update, Delete) untuk produk, baik untuk admin maupun katalog publik.
 
-### 1. Instalasi Dependensi
+---
 
-Pastikan Anda memiliki `pnpm` terinstal. Jika belum, Anda bisa menginstalnya dengan `npm install -g pnpm`. Kemudian, instal dependensi proyek:
+## 1. Prasyarat
+
+- Node.js v18+ (disarankan)
+- pnpm (jika belum ada, install dengan: `npm install -g pnpm`)
+- Database PostgreSQL (bisa pakai Neon, Supabase, atau lokal)
+
+---
+
+## 2. Instalasi Dependensi
 
 ```bash
-pnpm install
+npm install
 ```
 
-### 2. Jalankan Server Pengembangan
+---
 
-Setelah instalasi selesai, jalankan server pengembangan Next.js:
+## 3. Setup Database
+
+1. **Buat database PostgreSQL** dan pastikan sudah berjalan.
+2. **Jalankan migrasi** untuk membuat tabel produk:
+
+   - Jika menggunakan CLI, jalankan perintah SQL berikut di database Anda:
+     ```sql
+     CREATE TABLE products (
+         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+         name VARCHAR(255) NOT NULL,
+         description TEXT NOT NULL,
+         price DECIMAL(10, 2) NOT NULL,
+         image_url VARCHAR(255) NOT NULL,
+         category VARCHAR(100) NOT NULL,
+         is_available BOOLEAN DEFAULT true,
+         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+         updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+     );
+     ```
+
+3. **Atur environment variable** untuk koneksi database di file `.env`:
+   ```
+   DATABASE_URL=postgresql://username:password@host:port/database
+   ```
+
+---
+
+## 4. Jalankan Server Pengembangan
 
 ```bash
 pnpm dev
 ```
 
-### 3. Akses Halaman Admin
+---
 
-Buka browser Anda dan navigasikan ke alamat berikut:
+## 5. Akses Halaman Admin
 
-**[http://localhost:3000/admin/produk](http://localhost:3000/admin/produk)**
+Buka browser dan akses:
 
-Di halaman ini, Anda dapat melakukan operasi berikut:
+[http://localhost:3000/admin/product](http://localhost:3000/admin/product)
 
-- **Melihat semua produk** yang ada.
-- **Menambah produk baru** dengan mengklik tombol "+ Tambah Produk Baru".
-- **Mengedit produk** yang sudah ada dengan mengklik tombol "Edit" pada baris produk yang bersangkutan.
-- **Menghapus produk** dengan mengklik tombol "Hapus".
+Di halaman ini, Anda dapat:
 
-### 4. Verifikasi di Halaman Publik
+- Melihat semua produk
+- Menambah produk baru
+- Mengedit produk
+- Menghapus produk
 
-Setiap perubahan yang Anda buat di halaman admin (tambah, edit, hapus) akan langsung terlihat di halaman katalog produk publik yang dapat diakses di:
+---
 
-**[http://localhost:3000/produk](http://localhost:3000/produk)**
+## 6. Lihat Katalog Produk Publik
+
+Setiap perubahan di admin akan langsung tampil di katalog publik:
+
+[http://localhost:3000/produk](http://localhost:3000/produk)
+
+---
+
+## 7. Struktur Data Produk
+
+Data produk yang digunakan di API dan database memiliki struktur berikut:
+
+```ts
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  description: string;
+  category: string;
+  isAvailable: boolean;
+}
+```
+
+---
+
+## 8. Troubleshooting
+
+- Jika produk tidak muncul, pastikan koneksi database dan struktur tabel sudah benar.
+- Jika ada error 500 saat tambah/edit produk, cek apakah kolom di database sudah sesuai dengan field pada kode backend.
+- Untuk development, gunakan browser console dan terminal untuk melihat error detail.
+
+---
+
+**Selamat mencoba!.**

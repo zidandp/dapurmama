@@ -5,7 +5,7 @@ export interface Product {
   image: string;
   description: string;
   category: string;
-  isAvailable?: boolean;
+  isAvailable: boolean;
 }
 
 export interface Category {
