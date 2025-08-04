@@ -116,7 +116,7 @@ export default function LoginPage() {
           {/* Untuk development, tampilkan credentials */}
           <div className="mt-4 p-3 bg-blue-50 rounded-md text-sm text-blue-700">
             <p className="font-medium">Test Credentials:</p>
-            <p>Email: admin@dapurmama.com</p>
+            <p>Email: admin@example.com</p>
             <p>Password: admin123</p>
           </div>
         </CardContent>

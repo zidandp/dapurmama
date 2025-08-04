@@ -1,47 +1,37 @@
-import { NextResponse } from "next/server";
-import { z } from "zod";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { z } from "zod";
 
 const productSchema = z.object({
-  name: z.string().min(1),
-  description: z.string().min(1),
-  price: z.number().positive(),
-  image: z.string().url(),
-  category: z.string().min(1),
+  name: z.string().min(1, "Nama produk harus diisi"),
+  price: z.number().min(0, "Harga harus lebih besar atau sama dengan 0"),
+  imageUrl: z.string().url("URL gambar tidak valid"),
+  description: z.string().min(1, "Deskripsi produk harus diisi"),
+  category: z.string().min(1, "Kategori harus diisi"),
   isAvailable: z.boolean(),
 });
 
+// GET single product
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const product = await prisma.product.findUnique({
       where: { id: params.id },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        price: true,
-        imageUrl: true,
-        category: true,
-        isAvailable: true,
-        createdAt: true,
-        updatedAt: true,
-      },
     });
 
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    // Transform untuk kompatibilitas dengan frontend
+    // Transform untuk konsistensi dengan format yang diharapkan frontend
     const transformedProduct = {
       id: product.id,
       name: product.name,
+      price: product.price,
+      image: product.imageUrl, // Transform imageUrl ke image untuk frontend
       description: product.description,
-      price: Number(product.price),
-      image: product.imageUrl,
       category: product.category,
       isAvailable: product.isAvailable,
       createdAt: product.createdAt,
@@ -58,54 +48,35 @@ export async function GET(
   }
 }
 
+// PUT update product
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const body = await request.json();
-    const validation = productSchema.safeParse(body);
 
-    if (!validation.success) {
-      return NextResponse.json(
-        { error: validation.error.flatten().fieldErrors },
-        { status: 400 }
-      );
+    // Transform image ke imageUrl untuk database
+    if (body.image) {
+      body.imageUrl = body.image;
+      delete body.image;
     }
 
-    const { name, description, price, category, image, isAvailable } =
-      validation.data;
+    // Validasi data dengan Zod
+    const validatedData = productSchema.parse(body);
 
     const updatedProduct = await prisma.product.update({
       where: { id: params.id },
-      data: {
-        name,
-        description,
-        price,
-        imageUrl: image,
-        category,
-        isAvailable,
-      },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        price: true,
-        imageUrl: true,
-        category: true,
-        isAvailable: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      data: validatedData,
     });
 
-    // Transform untuk kompatibilitas dengan frontend
+    // Transform untuk konsistensi dengan format yang diharapkan frontend
     const transformedProduct = {
       id: updatedProduct.id,
       name: updatedProduct.name,
+      price: updatedProduct.price,
+      image: updatedProduct.imageUrl, // Transform imageUrl ke image untuk frontend
       description: updatedProduct.description,
-      price: Number(updatedProduct.price),
-      image: updatedProduct.imageUrl,
       category: updatedProduct.category,
       isAvailable: updatedProduct.isAvailable,
       createdAt: updatedProduct.createdAt,
@@ -114,9 +85,24 @@ export async function PUT(
 
     return NextResponse.json(transformedProduct);
   } catch (error) {
-    if (error.code === "P2025") {
+    // Type-safe error handling untuk Prisma errors
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === "P2025"
+    ) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
+
+    // Handle Zod validation errors
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Validation failed", details: error.errors },
+        { status: 400 }
+      );
+    }
+
     console.error("Failed to update product:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
@@ -125,8 +111,9 @@ export async function PUT(
   }
 }
 
+// DELETE product
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -136,9 +123,16 @@ export async function DELETE(
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    if (error.code === "P2025") {
+    // Type-safe error handling untuk Prisma errors
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === "P2025"
+    ) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
+
     console.error("Failed to delete product:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
