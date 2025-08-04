@@ -1,6 +1,6 @@
-import { sql } from "@vercel/postgres";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { prisma } from "@/lib/prisma";
 
 const productSchema = z.object({
   name: z.string().min(1),
@@ -11,28 +11,44 @@ const productSchema = z.object({
   isAvailable: z.boolean(),
 });
 
-// Fungsi untuk memetakan hasil DB (snake_case) ke objek Product (camelCase)
-const dbProductToProduct = (dbProduct: any) => ({
-  id: dbProduct.id,
-  name: dbProduct.name,
-  description: dbProduct.description,
-  price: parseFloat(dbProduct.price),
-  image: dbProduct.image_url,
-  category: dbProduct.category,
-  isAvailable: dbProduct.is_available,
-});
-
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { rows: productFromDb } =
-      await sql`SELECT * FROM products WHERE id = ${params.id};`;
-    if (productFromDb.length === 0) {
+    const product = await prisma.product.findUnique({
+      where: { id: params.id },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        price: true,
+        imageUrl: true,
+        category: true,
+        isAvailable: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
-    return NextResponse.json(dbProductToProduct(productFromDb[0]));
+
+    // Transform untuk kompatibilitas dengan frontend
+    const transformedProduct = {
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      price: Number(product.price),
+      image: product.imageUrl,
+      category: product.category,
+      isAvailable: product.isAvailable,
+      createdAt: product.createdAt,
+      updatedAt: product.updatedAt,
+    };
+
+    return NextResponse.json(transformedProduct);
   } catch (error) {
     console.error("Failed to fetch product:", error);
     return NextResponse.json(
@@ -46,7 +62,6 @@ export async function PUT(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const id = params.id;
   try {
     const body = await request.json();
     const validation = productSchema.safeParse(body);
@@ -61,18 +76,47 @@ export async function PUT(
     const { name, description, price, category, image, isAvailable } =
       validation.data;
 
-    const { rows: updatedProductFromDb } = await sql`
-      UPDATE products
-      SET name = ${name}, description = ${description}, price = ${price}, category = ${category}, image_url = ${image}, is_available = ${isAvailable}, updated_at = NOW()
-      WHERE id = ${id}
-      RETURNING *;
-    `;
-    if (updatedProductFromDb.length === 0) {
+    const updatedProduct = await prisma.product.update({
+      where: { id: params.id },
+      data: {
+        name,
+        description,
+        price,
+        imageUrl: image,
+        category,
+        isAvailable,
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        price: true,
+        imageUrl: true,
+        category: true,
+        isAvailable: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    // Transform untuk kompatibilitas dengan frontend
+    const transformedProduct = {
+      id: updatedProduct.id,
+      name: updatedProduct.name,
+      description: updatedProduct.description,
+      price: Number(updatedProduct.price),
+      image: updatedProduct.imageUrl,
+      category: updatedProduct.category,
+      isAvailable: updatedProduct.isAvailable,
+      createdAt: updatedProduct.createdAt,
+      updatedAt: updatedProduct.updatedAt,
+    };
+
+    return NextResponse.json(transformedProduct);
+  } catch (error) {
+    if (error.code === "P2025") {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
-    const updatedProduct = dbProductToProduct(updatedProductFromDb[0]);
-    return NextResponse.json(updatedProduct);
-  } catch (error) {
     console.error("Failed to update product:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
@@ -85,11 +129,16 @@ export async function DELETE(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const id = params.id;
   try {
-    await sql`DELETE FROM products WHERE id = ${id}`;
-    return new NextResponse(null, { status: 204 }); // No Content
+    await prisma.product.delete({
+      where: { id: params.id },
+    });
+
+    return new NextResponse(null, { status: 204 });
   } catch (error) {
+    if (error.code === "P2025") {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
     console.error("Failed to delete product:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },

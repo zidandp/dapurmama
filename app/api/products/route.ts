@@ -1,6 +1,6 @@
-import { sql } from "@vercel/postgres";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { prisma } from "@/lib/prisma";
 
 // Skema validasi untuk data produk yang masuk
 const productSchema = z.object({
@@ -12,24 +12,39 @@ const productSchema = z.object({
   isAvailable: z.boolean(),
 });
 
-// Fungsi untuk memetakan hasil DB (snake_case) ke objek Product (camelCase)
-const dbProductToProduct = (dbProduct: any) => ({
-  id: dbProduct.id,
-  name: dbProduct.name,
-  description: dbProduct.description,
-  price: parseFloat(dbProduct.price),
-  image: dbProduct.image_url,
-  category: dbProduct.category,
-  isAvailable: dbProduct.is_available,
-});
-
 export async function GET() {
   try {
-    const { rows: productsFromDb } =
-      await sql`SELECT * FROM products ORDER BY created_at DESC;`;
-    // Transformasi data sebelum dikirim ke client
-    const products = productsFromDb.map(dbProductToProduct);
-    return NextResponse.json(products);
+    const products = await prisma.product.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        price: true,
+        imageUrl: true,
+        category: true,
+        isAvailable: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    // Transform untuk kompatibilitas dengan frontend yang sudah ada
+    const transformedProducts = products.map((product) => ({
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      price: Number(product.price),
+      image: product.imageUrl, // Map imageUrl ke image
+      category: product.category,
+      isAvailable: product.isAvailable,
+      createdAt: product.createdAt,
+      updatedAt: product.updatedAt,
+    }));
+
+    return NextResponse.json(transformedProducts);
   } catch (error) {
     console.error("Failed to fetch products:", error);
     return NextResponse.json(
@@ -54,13 +69,42 @@ export async function POST(request: Request) {
     const { name, description, price, category, image, isAvailable } =
       validation.data;
 
-    const { rows: newProductFromDb } = await sql`
-      INSERT INTO products (name, description, price, image_url, category, is_available)
-      VALUES (${name}, ${description}, ${price}, ${image}, ${category}, ${isAvailable})
-      RETURNING *;
-    `;
-    const newProduct = dbProductToProduct(newProductFromDb[0]);
-    return NextResponse.json(newProduct, { status: 201 });
+    const newProduct = await prisma.product.create({
+      data: {
+        name,
+        description,
+        price,
+        imageUrl: image, // Map image ke imageUrl
+        category,
+        isAvailable,
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        price: true,
+        imageUrl: true,
+        category: true,
+        isAvailable: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    // Transform untuk kompatibilitas dengan frontend
+    const transformedProduct = {
+      id: newProduct.id,
+      name: newProduct.name,
+      description: newProduct.description,
+      price: Number(newProduct.price),
+      image: newProduct.imageUrl,
+      category: newProduct.category,
+      isAvailable: newProduct.isAvailable,
+      createdAt: newProduct.createdAt,
+      updatedAt: newProduct.updatedAt,
+    };
+
+    return NextResponse.json(transformedProduct, { status: 201 });
   } catch (error) {
     console.error("Failed to create product:", error);
     return NextResponse.json(
