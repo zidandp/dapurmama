@@ -109,14 +109,31 @@ export function POSessionForm({ session, onSuccess }: POSessionFormProps) {
         endDate: new Date(data.endDate).toISOString(),
       };
 
+      // GET JWT TOKEN FROM LOCALSTORAGE
+      const token = localStorage.getItem("admin_token");
+      if (!token) {
+        throw new Error("Token tidak ditemukan. Silakan login ulang.");
+      }
+
       const res = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // ADD JWT TOKEN
+        },
         body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
         const errorData = await res.json();
+
+        // Handle authentication errors
+        if (res.status === 401) {
+          localStorage.removeItem("admin_token");
+          window.location.href = "/admin/login";
+          return;
+        }
+
         throw new Error(errorData.error || "Gagal menyimpan sesi PO");
       }
 

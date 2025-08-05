@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser, requireAdminAuth } from "@/lib/auth-utils";
 
 // Schema validasi untuk POSession
 const poSessionSchema = z
@@ -55,7 +56,7 @@ export async function GET() {
       },
     });
 
-    // Transform data untuk frontend dengan type safety
+    // Transform data untuk frontend
     const transformedSessions = poSessions.map((session) => ({
       id: session.id,
       name: session.name,
@@ -86,9 +87,14 @@ export async function GET() {
   }
 }
 
-// POST create new PO session
-export async function POST(request: Request) {
+// POST create new PO session - REQUIRES AUTHENTICATION
+export async function POST(request: NextRequest) {
   try {
+    // 1. AUTHENTICATE USER FIRST
+    const currentUser = await getCurrentUser(request);
+    const adminUser = requireAdminAuth(currentUser);
+
+    // 2. VALIDATE REQUEST BODY
     const body = await request.json();
     const validation = poSessionSchema.safeParse(body);
 
@@ -102,12 +108,9 @@ export async function POST(request: Request) {
     const { name, description, startDate, endDate, status, productIds } =
       validation.data;
 
-    // TODO: Ambil user ID dari JWT token (sementara hardcode untuk development)
-    const createdById = await getFirstAdminUser();
-
-    // Buat POSession dengan transaction untuk memastikan konsistensi data
+    // 3. CREATE PO SESSION WITH AUTHENTICATED USER ID
     const newPOSession = await prisma.$transaction(async (tx) => {
-      // Buat POSession
+      // Buat POSession dengan user ID dari JWT token
       const poSession = await tx.pOSession.create({
         data: {
           name,
@@ -115,7 +118,7 @@ export async function POST(request: Request) {
           startDate: new Date(startDate),
           endDate: new Date(endDate),
           status,
-          createdById,
+          createdById: adminUser.id, // Use authenticated user ID
         },
       });
 
@@ -130,7 +133,7 @@ export async function POST(request: Request) {
       return poSession;
     });
 
-    // Fetch data lengkap untuk response
+    // 4. FETCH COMPLETE DATA FOR RESPONSE
     const fullPOSession = await prisma.pOSession.findUnique({
       where: { id: newPOSession.id },
       include: {
@@ -157,7 +160,7 @@ export async function POST(request: Request) {
       },
     });
 
-    // Transform untuk response dengan type safety
+    // 5. TRANSFORM FOR RESPONSE
     const transformedSession = {
       id: fullPOSession!.id,
       name: fullPOSession!.name,
@@ -181,34 +184,26 @@ export async function POST(request: Request) {
     return NextResponse.json(transformedSession, { status: 201 });
   } catch (error) {
     console.error("Failed to create PO session:", error);
+
+    // Handle authentication errors
+    if (error instanceof Error) {
+      if (error.message === "Authentication required") {
+        return NextResponse.json(
+          { error: "Token tidak valid atau sudah expired" },
+          { status: 401 }
+        );
+      }
+      if (error.message === "Admin access required") {
+        return NextResponse.json(
+          { error: "Akses admin diperlukan" },
+          { status: 403 }
+        );
+      }
+    }
+
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
     );
-  }
-}
-
-async function getFirstAdminUser(): Promise<string> {
-  try {
-    const adminUser = await prisma.user.findFirst({
-      where: { role: "ADMIN" },
-    });
-
-    if (!adminUser) {
-      // Buat admin default jika belum ada
-      const newAdmin = await prisma.user.create({
-        data: {
-          email: "admin@dapurmama.com",
-          name: "Admin Dapur Mama",
-          password: "$2b$10$defaulthashedpassword", // Temporary
-          role: "ADMIN",
-        },
-      });
-      return newAdmin.id;
-    }
-
-    return adminUser.id;
-  } catch (error) {
-    throw new Error("Failed to get admin user");
   }
 }

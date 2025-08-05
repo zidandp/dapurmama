@@ -1,48 +1,56 @@
 "use client";
 
-import { useState } from 'react';
-import { X, ShoppingCart, Minus, Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Product } from '@/lib/types';
-import { formatPrice } from '@/lib/data';
-import { useCart } from '@/components/providers/cart-provider';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { X, ShoppingCart, Minus, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Product } from "@/lib/types";
+import { formatPrice } from "@/lib/data";
+import { useCart } from "@/components/providers/cart-provider";
+import { toast } from "sonner";
 
 interface ProductModalProps {
   product: Product;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  isOpen: boolean;
+  onClose: () => void;
+  poSessionId?: string | null;
 }
 
-export function ProductModal({ product, open, onOpenChange }: ProductModalProps) {
+export function ProductModal({
+  product,
+  isOpen,
+  onClose,
+  poSessionId,
+}: ProductModalProps) {
   const [quantity, setQuantity] = useState(1);
   const { addItem } = useCart();
 
   const handleAddToCart = () => {
     if (!product.isAvailable) {
-      toast.error('Produk sedang tidak tersedia');
+      toast.error("Produk sedang tidak tersedia");
       return;
     }
-    
-    for (let i = 0; i < quantity; i++) {
-      addItem(product);
+
+    addItem(product);
+
+    if (poSessionId) {
+      toast.success(`${product.name} ditambahkan ke keranjang (Sesi PO)`);
+    } else {
+      toast.success(`${product.name} ditambahkan ke keranjang`);
     }
-    
-    toast.success(`${quantity}x ${product.name} ditambahkan ke keranjang`);
-    onOpenChange(false);
-    setQuantity(1);
+
+    onClose();
   };
 
-  if (!open) return null;
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
       {/* Backdrop */}
-      <div 
+      <div
         className="absolute inset-0 bg-background/80 backdrop-blur-sm"
-        onClick={() => onOpenChange(false)}
+        onClick={() => onClose()}
       />
-      
+
       {/* Modal */}
       <div className="absolute bottom-0 left-0 right-0 bg-background rounded-t-2xl max-h-[90vh] overflow-y-auto animate-slide-up">
         <div className="sticky top-0 flex items-center justify-between p-4 border-b border-border bg-background/95 backdrop-blur">
@@ -50,7 +58,7 @@ export function ProductModal({ product, open, onOpenChange }: ProductModalProps)
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => onOpenChange(false)}
+            onClick={() => onClose()}
             className="btn-touch"
           >
             <X className="h-5 w-5" />
@@ -119,7 +127,8 @@ export function ProductModal({ product, open, onOpenChange }: ProductModalProps)
                   </Button>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  Subtotal: <span className="font-medium text-primary">
+                  Subtotal:{" "}
+                  <span className="font-medium text-primary">
                     {formatPrice(product.price * quantity)}
                   </span>
                 </div>
@@ -136,7 +145,7 @@ export function ProductModal({ product, open, onOpenChange }: ProductModalProps)
               size="lg"
             >
               <ShoppingCart className="h-5 w-5 mr-2" />
-              {product.isAvailable ? 'Tambah ke Keranjang' : 'Tidak Tersedia'}
+              {product.isAvailable ? "Tambah ke Keranjang" : "Tidak Tersedia"}
             </Button>
           </div>
         </div>

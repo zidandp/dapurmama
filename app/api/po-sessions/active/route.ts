@@ -19,9 +19,7 @@ export async function GET() {
         poSessionProducts: {
           include: {
             product: {
-              where: {
-                isAvailable: true,
-              },
+              // HAPUS bagian where ini - tidak valid di nested include
               select: {
                 id: true,
                 name: true,
@@ -40,7 +38,7 @@ export async function GET() {
       },
     });
 
-    // Transform data untuk frontend
+    // Transform data untuk frontend dengan filtering manual
     const transformedSessions = activePOSessions.map((session) => ({
       id: session.id,
       name: session.name,
@@ -49,7 +47,8 @@ export async function GET() {
       endDate: session.endDate.toISOString(),
       status: session.status,
       products: session.poSessionProducts
-        .filter((psp) => psp.product) // Filter produk yang masih tersedia
+        // Filter produk yang tersedia di level JavaScript
+        .filter((psp) => psp.product && psp.product.isAvailable)
         .map((psp) => ({
           id: psp.product.id,
           name: psp.product.name,
