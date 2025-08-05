@@ -28,3 +28,30 @@ export interface OrderForm {
   address: string;
   notes?: string;
 }
+
+export interface POSession {
+  id: string;
+  name: string;
+  description?: string;
+  startDate: string;
+  endDate: string;
+  status: "DRAFT" | "ACTIVE" | "CLOSED";
+  createdBy: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  products: Product[];
+  totalOrders: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface POSessionFormData {
+  name: string;
+  description?: string;
+  startDate: string;
+  endDate: string;
+  status: "DRAFT" | "ACTIVE" | "CLOSED";
+  productIds: string[];
+}

@@ -19,7 +19,7 @@ const navigation = [
   },
   {
     name: "Produk",
-    href: "/admin/products",
+    href: "/admin/produk",
     icon: Package,
   },
   {
