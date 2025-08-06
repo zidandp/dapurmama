@@ -17,7 +17,7 @@ const orderSchema = z.object({
       })
     )
     .min(1, "Minimal 1 item dalam pesanan"),
-  poSessionId: z.string().uuid("ID sesi PO tidak valid").optional(),
+  poSessionId: z.string().uuid("ID sesi PO tidak valid").nullable().optional(), // PERBAIKAN: tambah .nullable()
 });
 
 // GET all orders (untuk admin)

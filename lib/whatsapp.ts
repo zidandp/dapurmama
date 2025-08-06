@@ -1,41 +1,90 @@
-import { OrderForm } from './types';
-import { formatPrice } from './data';
+import { OrderForm } from "./types";
+import { formatPrice } from "./data";
 
 interface CartItem {
   id: string;
   name: string;
   price: number;
   quantity: number;
+  poSessionId?: string;
 }
 
 export function generateWhatsAppMessage(
   items: CartItem[],
   orderForm: OrderForm,
-  totalPrice: number
+  totalPrice: number,
+  orderNumber?: string,
+  poSessionName?: string
 ): string {
-  const itemsList = items.map(item => 
-    `• ${item.name} (${item.quantity}x) - ${formatPrice(item.price * item.quantity)}`
-  ).join('\n');
+  const currentDate = new Date().toLocaleDateString("id-ID", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
-  const message = `🧁 *Pesanan DapurMama* 🧁
+  // Header dengan emoji dan order number
+  const header = orderNumber
+    ? `🧾 *PESANAN BARU #${orderNumber}*\n📅 ${currentDate}\n\n`
+    : `🧾 *PESANAN BARU*\n📅 ${currentDate}\n\n`;
 
-*Detail Pesanan:*
-${itemsList}
+  // PO Session info jika ada
+  const poInfo = poSessionName ? `🎯 *Pre-Order:* ${poSessionName}\n\n` : "";
 
-*Total: ${formatPrice(totalPrice)}*
+  // Data pelanggan dengan format rapi
+  const customerInfo =
+    `👤 *DATA PELANGGAN*\n` +
+    `┣ Nama: ${orderForm.name}\n` +
+    `┣ Telepon: ${orderForm.phone}\n` +
+    `┗ Alamat: ${orderForm.address}\n` +
+    (orderForm.notes ? `💬 *Catatan:* ${orderForm.notes}\n` : "") +
+    `\n`;
 
-*Data Pemesan:*
-👤 Nama: ${orderForm.name}
-📞 No. WA: ${orderForm.phone}
-📍 Alamat: ${orderForm.address}
-${orderForm.notes ? `📝 Catatan: ${orderForm.notes}` : ''}
+  // Detail pesanan dengan format tabel
+  const itemsHeader = `🛒 *DETAIL PESANAN*\n`;
+  const itemsList = items
+    .map((item, index) => {
+      const itemTotal = formatPrice(item.price * item.quantity);
+      const unitPrice = formatPrice(item.price);
+      const poTag = item.poSessionId ? " 🎯" : "";
 
-Terima kasih sudah mempercayai DapurMama! 💕`;
+      return (
+        `${index + 1}. ${item.name}${poTag}\n` +
+        `   ${item.quantity}x @ ${unitPrice} = ${itemTotal}`
+      );
+    })
+    .join("\n");
 
-  return encodeURIComponent(message);
+  // Total dengan garis pemisah
+  const separator = `${"─".repeat(25)}\n`;
+  const totalSection = `${separator}💰 *TOTAL: ${formatPrice(
+    totalPrice
+  )}*\n${separator}`;
+
+  // Footer
+  const footer =
+    `\n🙏 Terima kasih atas pesanannya!\n` +
+    `📞 Kami akan segera menghubungi Anda untuk konfirmasi.`;
+
+  return (
+    header +
+    poInfo +
+    customerInfo +
+    itemsHeader +
+    itemsList +
+    "\n" +
+    totalSection +
+    footer
+  );
 }
 
-export function openWhatsApp(message: string, phoneNumber: string = '628123456789'): void {
-  const url = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${message}`;
-  window.open(url, '_blank');
+export function openWhatsApp(
+  message: string,
+  phoneNumber: string = "6289639011775"
+): void {
+  const encodedMessage = encodeURIComponent(message);
+  const url = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`;
+  window.open(url, "_blank");
 }
