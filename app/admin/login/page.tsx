@@ -84,7 +84,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
-                placeholder="admin@dapurmama.com"
+                placeholder="Masukkan email"
               />
             </div>
 
@@ -113,12 +113,12 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* Untuk development, tampilkan credentials */}
+          {/* Untuk development, tampilkan credentials
           <div className="mt-4 p-3 bg-blue-50 rounded-md text-sm text-blue-700">
             <p className="font-medium">Test Credentials:</p>
             <p>Email: admin@example.com</p>
             <p>Password: admin123</p>
-          </div>
+          </div> */}
         </CardContent>
       </Card>
     </div>
