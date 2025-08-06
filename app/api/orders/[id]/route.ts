@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { getCurrentUser, requireAdminAuth } from "@/lib/auth-utils";
 
 const updateOrderSchema = z.object({
   status: z.enum([
@@ -94,6 +95,10 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    // Require admin authentication
+    const currentUser = await getCurrentUser(request);
+    requireAdminAuth(currentUser);
+
     const body = await request.json();
     const validation = updateOrderSchema.safeParse(body);
 
@@ -104,14 +109,12 @@ export async function PUT(
       );
     }
 
-    const { status, notes } = validation.data;
+    const { status } = validation.data;
 
+    // Update order status
     const updatedOrder = await prisma.order.update({
       where: { id: params.id },
-      data: {
-        status,
-        ...(notes !== undefined && { notes }),
-      },
+      data: { status },
       include: {
         orderItems: {
           include: {
@@ -162,25 +165,23 @@ export async function PUT(
 
     return NextResponse.json(transformedOrder);
   } catch (error) {
-    // Type-safe error handling untuk Prisma errors
-    if (
-      error &&
-      typeof error === "object" &&
-      "code" in error &&
-      error.code === "P2025"
-    ) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 });
-    }
-
-    // Handle Zod validation errors
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Validation failed", details: error.errors },
-        { status: 400 }
-      );
-    }
-
     console.error("Failed to update order:", error);
+
+    if (error instanceof Error) {
+      if (error.message === "Authentication required") {
+        return NextResponse.json(
+          { error: "Token tidak valid atau sudah expired" },
+          { status: 401 }
+        );
+      }
+      if (error.message === "Admin access required") {
+        return NextResponse.json(
+          { error: "Akses admin diperlukan" },
+          { status: 403 }
+        );
+      }
+    }
+
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
