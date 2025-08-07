@@ -55,21 +55,21 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
     setIsSubmitting(true);
 
     try {
-      // 1. SAVE ORDER TO DATABASE
+      // 1. CREATE ORDER
       const orderData = {
         customerName: orderForm.name,
         customerPhone: orderForm.phone,
         customerAddress: orderForm.address,
         notes: orderForm.notes,
-        poSessionId: currentPOSessionId || undefined, // PERBAIKAN: gunakan undefined bukan null
         items: items.map((item) => ({
           productId: item.id,
           quantity: item.quantity,
           price: item.price,
         })),
+        poSessionId: currentPOSessionId || undefined,
       };
 
-      console.log("Sending order data:", orderData); // Debug log
+      console.log("Sending order data:", orderData);
 
       const response = await fetch("/api/orders", {
         method: "POST",
@@ -82,18 +82,19 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
       if (!response.ok) {
         const errorData = await response.json();
         console.error("API Error:", errorData);
-        throw new Error(JSON.stringify(errorData.error)); // PERBAIKAN: stringify error object
+        throw new Error(JSON.stringify(errorData.error));
       }
 
       const orderResult = await response.json();
+      console.log("✅ Order created:", orderResult); // Debug log
 
-      // 2. SEND WHATSAPP MESSAGE
+      // 2. SEND WHATSAPP MESSAGE - FIXED: access orderNumber correctly
       const message = generateWhatsAppMessage(
         items,
         orderForm,
         totalPrice,
-        orderResult.orderNumber,
-        currentPOSessionId ? "Pre-Order Session" : undefined // Bisa diambil dari nama session
+        orderResult.order.orderNumber, // FIXED: access nested orderNumber
+        currentPOSessionId ? "Pre-Order Session" : undefined
       );
       openWhatsApp(message);
 
@@ -104,7 +105,7 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
       onOpenChange(false);
 
       toast.success(
-        `Pesanan #${orderResult.orderNumber} berhasil disimpan dan dikirim ke WhatsApp!`
+        `Pesanan #${orderResult.order.orderNumber} berhasil disimpan dan dikirim ke WhatsApp!` // FIXED: access nested orderNumber
       );
     } catch (error: any) {
       console.error("Checkout error:", error);

@@ -6,6 +6,7 @@ import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -85,8 +86,9 @@ export function ProductDataTable({
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [availabilityFilter, setAvailabilityFilter] = useState<string>("all");
+  // Fix sortBy type - change "created" to "createdAt"
   const [sortBy, setSortBy] = useState<
-    "name" | "price" | "category" | "created"
+    "name" | "price" | "category" | "createdAt"
   >("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
@@ -117,9 +119,11 @@ export function ProductDataTable({
     loadProducts();
   }, [refreshTrigger]);
 
-  // Get unique categories
+  // Get unique categories - Fixed untuk ES5 compatibility
   const categories = useMemo(() => {
-    const uniqueCategories = [...new Set(products.map((p) => p.category))];
+    const categorySet = new Set<string>();
+    products.forEach((p) => categorySet.add(p.category));
+    const uniqueCategories = Array.from(categorySet);
     return uniqueCategories.sort();
   }, [products]);
 
@@ -155,12 +159,31 @@ export function ProductDataTable({
 
     // Sort
     filtered.sort((a, b) => {
-      let aValue: any = a[sortBy];
-      let bValue: any = b[sortBy];
+      let aValue: any;
+      let bValue: any;
 
-      if (sortBy === "price") {
-        aValue = Number(aValue);
-        bValue = Number(bValue);
+      // Handle sorting berdasarkan field yang tersedia
+      switch (sortBy) {
+        case "name":
+          aValue = a.name;
+          bValue = b.name;
+          break;
+        case "price":
+          aValue = Number(a.price);
+          bValue = Number(b.price);
+          break;
+        case "category":
+          aValue = a.category;
+          bValue = b.category;
+          break;
+        case "createdAt":
+          // Handle optional createdAt field
+          aValue = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          bValue = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          break;
+        default:
+          aValue = a.name;
+          bValue = b.name;
       }
 
       if (sortOrder === "asc") {
@@ -259,7 +282,7 @@ export function ProductDataTable({
     onDataChange();
   };
 
-  const toggleSort = (field: typeof sortBy) => {
+  const toggleSort = (field: "name" | "price" | "category" | "createdAt") => {
     if (sortBy === field) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {

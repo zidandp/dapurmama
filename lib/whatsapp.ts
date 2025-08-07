@@ -25,10 +25,14 @@ export function generateWhatsAppMessage(
     minute: "2-digit",
   });
 
-  // Header dengan emoji dan order number
-  const header = orderNumber
-    ? `🧾 *PESANAN BARU #${orderNumber}*\n📅 ${currentDate}\n\n`
-    : `🧾 *PESANAN BARU*\n📅 ${currentDate}\n\n`;
+  // Header dengan emoji dan order number yang lebih prominent
+  let header = `🧾 *PESANAN BARU*\n📅 ${currentDate}\n`;
+
+  if (orderNumber) {
+    header += `📋 *No. Pesanan: ${orderNumber}*\n`;
+  }
+
+  header += `\n`;
 
   // PO Session info jika ada
   const poInfo = poSessionName ? `🎯 *Pre-Order:* ${poSessionName}\n\n` : "";
@@ -63,10 +67,15 @@ export function generateWhatsAppMessage(
     totalPrice
   )}*\n${separator}`;
 
-  // Footer
-  const footer =
-    `\n🙏 Terima kasih atas pesanannya!\n` +
-    `📞 Kami akan segera menghubungi Anda untuk konfirmasi.`;
+  // Footer dengan instruksi tracking
+  let footer = `\n🙏 Terima kasih atas pesanannya!\n📞 Kami akan segera menghubungi Anda untuk konfirmasi.`;
+
+  if (orderNumber) {
+    footer +=
+      `\n\n🔍 *Lacak pesanan Anda:*\n` +
+      `Kunjungi: dapurmama.com/track\n` +
+      `Masukkan: ${orderNumber}`;
+  }
 
   return (
     header +

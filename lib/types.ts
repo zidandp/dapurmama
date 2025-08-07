@@ -6,6 +6,8 @@ export interface Product {
   description: string;
   category: string;
   isAvailable: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface Category {

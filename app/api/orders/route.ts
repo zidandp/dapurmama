@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 
-// Schema validasi untuk Order
+// Schema validasi untuk Order - FIXED
 const orderSchema = z.object({
   customerName: z.string().min(1, "Nama pelanggan tidak boleh kosong"),
   customerPhone: z.string().min(1, "Nomor telepon tidak boleh kosong"),
@@ -17,8 +17,39 @@ const orderSchema = z.object({
       })
     )
     .min(1, "Minimal 1 item dalam pesanan"),
-  poSessionId: z.string().uuid("ID sesi PO tidak valid").nullable().optional(), // PERBAIKAN: tambah .nullable()
+  poSessionId: z.string().uuid("ID sesi PO tidak valid").nullish(), // FIXED: gunakan nullish() untuk handle undefined/null
 });
+
+// Function untuk generate order number
+async function generateOrderNumber(): Promise<string> {
+  const now = new Date();
+  const year = now.getFullYear().toString().slice(-2);
+  const month = (now.getMonth() + 1).toString().padStart(2, "0");
+  const day = now.getDate().toString().padStart(2, "0");
+
+  // Format: DM-YYMMDD-XXXX
+  const prefix = `DM-${year}${month}${day}`;
+
+  // Cari order terakhir hari ini
+  const lastOrder = await prisma.order.findFirst({
+    where: {
+      orderNumber: {
+        startsWith: prefix,
+      },
+    },
+    orderBy: {
+      orderNumber: "desc",
+    },
+  });
+
+  let sequence = 1;
+  if (lastOrder) {
+    const lastSequence = parseInt(lastOrder.orderNumber.split("-")[2]);
+    sequence = lastSequence + 1;
+  }
+
+  return `${prefix}-${sequence.toString().padStart(4, "0")}`;
+}
 
 // GET all orders (untuk admin)
 export async function GET() {
@@ -88,12 +119,20 @@ export async function GET() {
 // POST create new order
 export async function POST(request: Request) {
   try {
+    console.log("🛒 Processing new order...");
+
     const body = await request.json();
+    console.log("📦 Received order data:", JSON.stringify(body, null, 2));
+
     const validation = orderSchema.safeParse(body);
 
     if (!validation.success) {
+      console.error("❌ Validation failed:", validation.error.flatten());
       return NextResponse.json(
-        { error: validation.error.flatten().fieldErrors },
+        {
+          error: "Validation failed",
+          details: validation.error.flatten().fieldErrors,
+        },
         { status: 400 }
       );
     }
@@ -107,46 +146,38 @@ export async function POST(request: Request) {
       poSessionId,
     } = validation.data;
 
+    console.log("✅ Validation passed, processing order...");
+
     // Generate unique order number
     const orderNumber = await generateOrderNumber();
+    console.log("📋 Generated order number:", orderNumber);
 
     // Calculate total amount
     const totalAmount = items.reduce(
       (sum, item) => sum + item.price * item.quantity,
       0
     );
+    console.log("💰 Total amount:", totalAmount);
 
     // Validasi PO Session jika ada
     if (poSessionId) {
+      console.log("🔍 Checking PO Session:", poSessionId);
       const poSession = await prisma.pOSession.findUnique({
         where: { id: poSessionId },
       });
 
       if (!poSession) {
+        console.error("❌ PO Session not found:", poSessionId);
         return NextResponse.json(
           { error: "Sesi PO tidak ditemukan" },
           { status: 400 }
         );
       }
-
-      if (poSession.status !== "ACTIVE") {
-        return NextResponse.json(
-          { error: "Sesi PO tidak aktif" },
-          { status: 400 }
-        );
-      }
-
-      // Cek apakah masih dalam periode
-      const now = new Date();
-      if (now < poSession.startDate || now > poSession.endDate) {
-        return NextResponse.json(
-          { error: "Sesi PO sudah berakhir atau belum dimulai" },
-          { status: 400 }
-        );
-      }
+      console.log("✅ PO Session valid:", poSession.name);
     }
 
-    // Validasi produk tersedia
+    // Validasi products
+    console.log("🔍 Validating products...");
     const productIds = items.map((item) => item.productId);
     const products = await prisma.product.findMany({
       where: {
@@ -156,130 +187,84 @@ export async function POST(request: Request) {
     });
 
     if (products.length !== productIds.length) {
+      console.error("❌ Some products not found or not available");
       return NextResponse.json(
         { error: "Beberapa produk tidak tersedia" },
         { status: 400 }
       );
     }
+    console.log("✅ All products valid");
 
-    // Buat order dengan transaction
-    const newOrder = await prisma.$transaction(async (tx) => {
-      // Buat order
-      const order = await tx.order.create({
+    // Create order dalam transaction
+    console.log("💾 Creating order in database...");
+    const order = await prisma.$transaction(async (tx) => {
+      // Create order
+      const newOrder = await tx.order.create({
         data: {
           orderNumber,
           customerName,
           customerPhone,
           customerAddress,
-          notes,
+          notes: notes || "",
           totalAmount,
-          status: "PENDING",
-          poSessionId,
+          poSessionId: poSessionId || null,
         },
       });
 
-      // Buat order items
-      await tx.orderItem.createMany({
-        data: items.map((item) => ({
-          orderId: order.id,
-          productId: item.productId,
-          quantity: item.quantity,
-          price: item.price,
-          subtotal: item.price * item.quantity,
-        })),
-      });
+      // Create order items
+      const orderItems = await Promise.all(
+        items.map((item) => {
+          const subtotal = item.price * item.quantity;
+          return tx.orderItem.create({
+            data: {
+              orderId: newOrder.id,
+              productId: item.productId,
+              quantity: item.quantity,
+              price: item.price,
+              subtotal,
+            },
+          });
+        })
+      );
 
-      return order;
+      return { order: newOrder, items: orderItems };
     });
 
-    // Fetch data lengkap untuk response
-    const fullOrder = await prisma.order.findUnique({
-      where: { id: newOrder.id },
-      include: {
-        orderItems: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                imageUrl: true,
-                category: true,
-              },
-            },
-          },
-        },
-        poSession: {
-          select: {
-            id: true,
-            name: true,
-            status: true,
-          },
-        },
+    console.log("✅ Order created successfully:", order.order.id);
+
+    // Return success response
+    return NextResponse.json({
+      success: true,
+      order: {
+        id: order.order.id,
+        orderNumber: order.order.orderNumber,
+        totalAmount: Number(order.order.totalAmount),
+        status: order.order.status,
       },
     });
-
-    // Transform untuk response
-    const transformedOrder = {
-      id: fullOrder!.id,
-      orderNumber: fullOrder!.orderNumber,
-      customerName: fullOrder!.customerName,
-      customerPhone: fullOrder!.customerPhone,
-      customerAddress: fullOrder!.customerAddress,
-      notes: fullOrder!.notes,
-      totalAmount: Number(fullOrder!.totalAmount),
-      status: fullOrder!.status,
-      poSession: fullOrder!.poSession,
-      items: fullOrder!.orderItems.map((item) => ({
-        id: item.id,
-        productId: item.productId,
-        productName: item.product.name,
-        productImage: item.product.imageUrl,
-        productCategory: item.product.category,
-        quantity: item.quantity,
-        price: Number(item.price),
-        subtotal: Number(item.subtotal),
-      })),
-      createdAt: fullOrder!.createdAt,
-      updatedAt: fullOrder!.updatedAt,
-    };
-
-    return NextResponse.json(transformedOrder, { status: 201 });
   } catch (error) {
-    console.error("Failed to create order:", error);
+    console.error("❌ Error creating order:", error);
+
+    // Handle unknown error type
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred";
+    const errorStack = error instanceof Error ? error.stack : undefined;
+
+    // Detailed error logging
+    console.error("Error message:", errorMessage);
+    if (errorStack) {
+      console.error("Error stack:", errorStack);
+    }
+
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      {
+        error: "Internal Server Error",
+        message:
+          process.env.NODE_ENV === "development"
+            ? errorMessage
+            : "Failed to create order",
+      },
       { status: 500 }
     );
   }
-}
-
-// Helper function untuk generate order number
-async function generateOrderNumber(): Promise<string> {
-  const now = new Date();
-  const year = now.getFullYear().toString().slice(-2);
-  const month = (now.getMonth() + 1).toString().padStart(2, "0");
-  const day = now.getDate().toString().padStart(2, "0");
-
-  // Format: DM-YYMMDD-XXXX
-  const prefix = `DM-${year}${month}${day}`;
-
-  // Cari order terakhir hari ini
-  const lastOrder = await prisma.order.findFirst({
-    where: {
-      orderNumber: {
-        startsWith: prefix,
-      },
-    },
-    orderBy: {
-      orderNumber: "desc",
-    },
-  });
-
-  let sequence = 1;
-  if (lastOrder) {
-    const lastSequence = parseInt(lastOrder.orderNumber.split("-")[2]);
-    sequence = lastSequence + 1;
-  }
-
-  return `${prefix}-${sequence.toString().padStart(4, "0")}`;
 }
