@@ -1,5 +1,5 @@
-import Link from 'next/link';
-import { Heart, Instagram, MessageCircle, Send } from 'lucide-react';
+import Link from "next/link";
+import { Heart, Instagram, MessageCircle, Send } from "lucide-react";
 
 export function Footer() {
   return (
@@ -10,7 +10,8 @@ export function Footer() {
           <div className="space-y-4">
             <h3 className="text-lg font-bold text-gradient">DapurMama</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Dessert rumahan berkualitas tinggi dibuat dengan cinta dan dedikasi untuk keluarga Indonesia.
+              Dessert rumahan berkualitas tinggi dibuat dengan cinta dan
+              dedikasi untuk keluarga Indonesia.
             </p>
           </div>
 
@@ -19,17 +20,26 @@ export function Footer() {
             <h4 className="font-semibold text-foreground">Menu Cepat</h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/katalog" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <Link
+                  href="/katalog"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
                   Katalog Produk
                 </Link>
               </li>
               <li>
-                <Link href="/tentang" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <Link
+                  href="/tentang"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
                   Tentang Kami
                 </Link>
               </li>
               <li>
-                <Link href="/kontak" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <Link
+                  href="/kontak"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
                   Kontak
                 </Link>
               </li>
@@ -41,7 +51,7 @@ export function Footer() {
             <h4 className="font-semibold text-foreground">Hubungi Kami</h4>
             <div className="flex items-center space-x-3">
               <Link
-                href="https://wa.me/628123456789"
+                href="https://wa.me/6289639011775"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors btn-touch inline-flex items-center justify-center"
@@ -73,7 +83,9 @@ export function Footer() {
 
         <div className="border-t border-border mt-12 pt-8 text-center">
           <p className="text-sm text-muted-foreground flex items-center justify-center gap-2">
-            Dibuat dengan <Heart className="h-4 w-4 text-pink-500 animate-bounce-gentle" /> oleh DapurMama © 2024
+            Dibuat dengan{" "}
+            <Heart className="h-4 w-4 text-pink-500 animate-bounce-gentle" />{" "}
+            oleh DapurMama © 2024
           </p>
         </div>
       </div>

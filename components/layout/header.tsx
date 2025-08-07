@@ -1,19 +1,20 @@
 "use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useState } from 'react';
-import { Menu, X, ShoppingBag } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { useCart } from '@/components/providers/cart-provider';
-import { CartDrawer } from '@/components/cart/cart-drawer';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+import { Menu, X, ShoppingBag } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { useCart } from "@/components/providers/cart-provider";
+import { CartDrawer } from "@/components/cart/cart-drawer";
 
 const navigation = [
-  { name: 'Beranda', href: '/' },
-  { name: 'Katalog', href: '/katalog' },
-  { name: 'Tentang', href: '/tentang' },
-  { name: 'Kontak', href: '/kontak' },
+  { name: "Beranda", href: "/" },
+  { name: "Katalog", href: "/katalog" },
+  { name: "Lacak Pesanan", href: "/track" },
+  { name: "Tentang", href: "/tentang" },
+  { name: "Kontak", href: "/kontak" },
 ];
 
 export function Header() {
@@ -29,7 +30,9 @@ export function Header() {
           <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Logo */}
             <Link href="/" className="flex items-center space-x-2">
-              <span className="text-lg sm:text-xl font-bold text-gradient">DapurMama</span>
+              <span className="text-lg sm:text-xl font-bold text-gradient">
+                DapurMama
+              </span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -40,8 +43,8 @@ export function Header() {
                   href={item.href}
                   className={`text-sm font-medium transition-colors hover:text-primary ${
                     pathname === item.href
-                      ? 'text-primary'
-                      : 'text-muted-foreground'
+                      ? "text-primary"
+                      : "text-muted-foreground"
                   }`}
                 >
                   {item.name}
@@ -52,7 +55,7 @@ export function Header() {
             {/* Right side buttons */}
             <div className="flex items-center space-x-1 sm:space-x-2">
               <ThemeToggle />
-              
+
               {/* Cart Button */}
               <Button
                 variant="outline"
@@ -75,7 +78,11 @@ export function Header() {
                 className="btn-touch md:hidden h-9 w-9"
                 onClick={() => setIsOpen(!isOpen)}
               >
-                {isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+                {isOpen ? (
+                  <X className="h-4 w-4" />
+                ) : (
+                  <Menu className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </div>
@@ -90,8 +97,8 @@ export function Header() {
                     href={item.href}
                     className={`text-sm font-medium py-2.5 px-3 rounded-lg transition-colors btn-touch ${
                       pathname === item.href
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-foreground hover:bg-accent hover:text-accent-foreground'
+                        ? "bg-primary text-primary-foreground"
+                        : "text-foreground hover:bg-accent hover:text-accent-foreground"
                     }`}
                     onClick={() => setIsOpen(false)}
                   >

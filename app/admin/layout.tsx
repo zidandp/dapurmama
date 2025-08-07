@@ -22,10 +22,15 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   }
 
   useEffect(() => {
+    if (pathname === "/admin") {
+      router.push("/admin/login");
+      return;
+    }
+
     if (!isLoading && !user) {
       router.push("/admin/login");
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading, router, pathname]);
 
   if (isLoading) {
     return (

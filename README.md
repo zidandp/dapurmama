@@ -8,149 +8,259 @@
 
 ---
 
-## 🚀 Fitur Utama
+## 🚀 Fitur yang Sudah Tersedia
 
 Aplikasi ini memiliki dua alur pengguna utama: Admin (Pengelola) dan Pelanggan.
 
-### Untuk Admin (Area Terproteksi)
+### 🔧 Untuk Admin (Area Terproteksi)
 
-- **🔐 Autentikasi Aman:** Sistem registrasi admin dilindungi oleh kode undangan rahasia dan login menggunakan JWT (JSON Web Tokens).
-- **📊 Dasbor Utama:** Menampilkan ringkasan data penting (akan dikembangkan).
-- **🍰 CRUD Manajemen Produk:** Fitur lengkap untuk menambah, melihat, mengedit, dan menghapus data master produk yang akan dijual. **(Memenuhi Syarat CRUD #1)**
-- **🗓️ CRUD Manajemen Sesi PO:** Fitur lengkap untuk membuat "event" Pre-Order, menentukan periode aktif, dan memilih produk apa saja yang tersedia di sesi tersebut. **(Memenuhi Syarat CRUD #2)**
-- **📦 Manajemen Pesanan:** Melihat daftar pesanan yang masuk dari pelanggan dan mengubah statusnya (akan dikembangkan).
+#### ✅ Fitur yang Sudah Implementasi Lengkap:
 
-### Untuk Pelanggan
+- **🔐 Autentikasi Aman:**
 
-- **🛍️ Katalog Dinamis:** Menampilkan Sesi PO yang sedang aktif dan produk yang tersedia berdasarkan data dari database.
-- **🛒 Keranjang Belanja:** Pelanggan dapat menambahkan beberapa produk ke keranjang belanja.
-- **💨 Alur Pemesanan Cepat:** Proses checkout sebagai tamu (_guest checkout_) yang mudah, hanya memerlukan nama dan nomor WhatsApp.
-- **📄 Halaman Informasi:** Halaman statis seperti "Tentang Kami" dan "Kontak".
+  - Registrasi admin dengan kode undangan rahasia
+  - Login menggunakan JWT (JSON Web Tokens)
+  - **Akses:** `/admin` → otomatis redirect ke dashboard/login
+
+- **📊 Dashboard Analytics:**
+
+  - Overview statistik bisnis (total produk, sesi PO aktif, pesanan hari ini, revenue)
+  - Grafik tren penjualan 7 hari terakhir
+  - Chart distribusi status pesanan
+  - Top 5 produk terlaris
+  - 5 pesanan terbaru
+  - **Akses:** `/admin/dashboard`
+
+- **🍰 CRUD Manajemen Produk (LENGKAP):**
+
+  - Create: Tambah produk baru dengan foto, nama, harga, deskripsi, kategori
+  - Read: Tampilan tabel dengan pagination, sorting, dan search
+  - Update: Edit semua data produk
+  - Delete: Hapus produk dengan konfirmasi
+  - **Akses:** `/admin/produk`
+
+- **🗓️ CRUD Manajemen Sesi PO (LENGKAP):**
+
+  - Create: Buat sesi PO baru dengan nama, periode aktif, dan pilih produk
+  - Read: Tabel sesi PO dengan status (DRAFT/ACTIVE/CLOSED)
+  - Update: Edit nama, tanggal, status, dan produk yang dijual
+  - Delete: Hapus sesi PO dengan konfirmasi
+  - **Akses:** `/admin/po-sessions`
+
+- **📦 CRUD Manajemen Pesanan (LENGKAP):**
+  - Read: Tabel semua pesanan dengan detail lengkap
+  - Update: Ubah status pesanan (PENDING → CONFIRMED → PROCESSING → READY → COMPLETED)
+  - Delete: Hapus pesanan dengan konfirmasi
+  - Filter berdasarkan status dan tanggal
+  - **Akses:** `/admin/orders`
+
+### 🛍️ Untuk Pelanggan (Area Publik)
+
+#### ✅ Fitur yang Sudah Implementasi Lengkap:
+
+- **🏠 Halaman Beranda:**
+
+  - Hero section dengan CTA
+  - Kategori produk
+  - Testimonial pelanggan
+  - **Akses:** `/`
+
+- **🛍️ Katalog Produk:**
+
+  - Menampilkan semua produk yang tersedia
+  - Filter berdasarkan kategori
+  - Search produk
+  - **Akses:** `/katalog`
+
+- **🛒 Keranjang Belanja:**
+
+  - Tambah/kurang quantity produk
+  - Hapus item dari keranjang
+  - Hitung total otomatis
+  - Persistent cart (tersimpan di localStorage)
+  - **Akses:** Icon keranjang di header
+
+- **📝 Proses Pemesanan (Guest Checkout):**
+
+  - Form isian nama, nomor telepon, alamat, dan catatan
+  - Validasi form lengkap
+  - Generate nomor pesanan otomatis (format: DM-YYMMDD-XXXX)
+  - Konfirmasi pesanan berhasil
+  - **Akses:** Dari keranjang → "Lanjut ke Checkout"
+
+- **🔍 Lacak Pesanan:**
+
+  - Input nomor pesanan untuk tracking
+  - Timeline visual status pesanan
+  - Detail pesanan dan item
+  - Estimasi waktu selesai
+  - **Akses:** `/track` atau link "Lacak Pesanan" di header
+
+- **📄 Halaman Informasi:**
+  - **Tentang Kami:** `/tentang`
+  - **Kontak:** `/kontak`
+
+---
+
+## 🎯 Cara Mengakses & Testing
+
+### 👨‍💼 Testing Area Admin
+
+1. **Akses Admin Panel:**
+
+   ```
+   Buka: /admin
+   (Otomatis redirect ke login jika belum masuk)
+   ```
+
+2. **Login Admin:**
+
+   - Email: `admin@dapurmama.com`
+   - Password: `admin123`
+   - Atau buat akun baru di `/admin/register` dengan kode undangan
+
+3. **Testing CRUD Operations:**
+
+   **a. Manajemen Produk (`/admin/produk`):**
+
+   - ✅ Create: Klik "Tambah Produk" → isi form → simpan
+   - ✅ Read: Lihat tabel produk dengan pagination & search
+   - ✅ Update: Klik "Edit" → ubah data → simpan
+   - ✅ Delete: Klik "Hapus" → konfirmasi
+
+   **b. Manajemen Sesi PO (`/admin/po-sessions`):**
+
+   - ✅ Create: Klik "Buat Sesi PO" → set nama, tanggal, pilih produk
+   - ✅ Read: Lihat semua sesi dengan status
+   - ✅ Update: Edit sesi → ubah status ke ACTIVE
+   - ✅ Delete: Hapus sesi yang tidak diperlukan
+
+   **c. Manajemen Pesanan (`/admin/orders`):**
+
+   - ✅ Read: Lihat semua pesanan masuk
+   - ✅ Update: Ubah status pesanan dari PENDING → COMPLETED
+   - ✅ Delete: Hapus pesanan tertentu
+
+### 🛒 Testing Area Pelanggan
+
+1. **Browse Produk:**
+
+   ```
+   Beranda: /
+   Katalog: /katalog
+   ```
+
+2. **Proses Pemesanan Lengkap:**
+
+   - Buka `/katalog`
+   - Pilih beberapa produk → tambah ke keranjang
+   - Klik icon keranjang di header
+   - Klik "Lanjut ke Checkout"
+   - Isi form pemesanan → submit
+   - Catat nomor pesanan yang muncul
+
+3. **Lacak Pesanan:**
+
+   - Buka `/track`
+   - Masukkan nomor pesanan (format: DM-YYMMDD-XXXX)
+   - Lihat detail dan timeline status
+
+4. **Testing Flow Lengkap:**
+   ```
+   Customer: Buat pesanan → dapatkan nomor pesanan
+   Admin: Lihat pesanan baru di /admin/orders → ubah status
+   Customer: Track pesanan → lihat perubahan status
+   ```
 
 ---
 
 ## 🛠️ Teknologi yang Digunakan
 
-Proyek ini dibangun menggunakan tumpukan teknologi modern yang berfokus pada pengalaman developer dan performa.
-
-| Kategori | Teknologi -
-| **Framework** | Next.js 14 (App Router), React 18 -
-| **Styling** | Tailwind CSS, shadcn/ui -
-| **Database** | Vercel Postgres (Neon) & Prisma ORM -
-| **Autentikasi** | JWT (Custom Implementation), bcrypt -
-| **Deployment** | Vercel -
-
----
-
-## 📖 Panduan untuk Reviewer
-
-Untuk memudahkan proses review, berikut adalah panduan untuk memeriksa fungsionalitas utama sesuai dengan persyaratan tugas akhir.
-
-### Kredensial & Setup Awal
-
-1.  **Registrasi Admin:**
-    - Buka halaman `/admin/register` (atau path registrasi yang sesuai).
-    - Lakukan registrasi dengan email dan password Anda.
-    - Anda akan membutuhkan **Kode Undangan Admin** yang tersimpan di file `.env` dengan key `ADMIN_INVITATION_CODE`.
-2.  **Login Admin:**
-    - Buka halaman `/admin/login`.
-    - Masuk menggunakan akun yang baru saja Anda buat.
-
-### Verifikasi Fitur Wajib
-
-#### 1. CRUD #1: Manajemen Produk
-
-- **Lokasi:** `/admin/produk`
-- **Create:** Gunakan tombol "Tambah Produk Baru" untuk membuat produk baru. Isi semua field dan simpan. Verifikasi data baru muncul di tabel.
-- **Read:** Pastikan semua produk dari database ditampilkan dengan benar di dalam tabel.
-- **Update:** Gunakan tombol "Edit" pada salah satu produk. Ubah nama atau harganya, lalu simpan. Verifikasi perubahan tersebut di tabel.
-- **Delete:** Gunakan tombol "Hapus" pada salah satu produk. Konfirmasi penghapusan dan verifikasi produk tersebut hilang dari tabel.
-
-#### 2. CRUD #2: Manajemen Sesi PO
-
-- **Lokasi:** `/admin/po-sessions`
-- **Create:** Gunakan tombol "Buat Sesi PO Baru". Beri nama sesi, tentukan tanggal mulai dan selesai, dan pilih beberapa produk dari daftar yang tersedia. Simpan sesi.
-- **Read:** Pastikan sesi PO yang baru dibuat muncul di tabel.
-- **Update:** Gunakan tombol "Edit". Ubah nama sesi atau tambahkan/hapus produk yang dijual, lalu simpan. Verifikasi perubahannya.
-- **Delete:** Gunakan tombol "Hapus" pada salah satu sesi PO dan verifikasi sesi tersebut hilang dari tabel.
-
-#### 3. Alur Pemesanan Pelanggan (Guest Checkout)
-
-- **Lokasi:** `/katalog`
-- **Read:** Pastikan halaman katalog menampilkan Sesi PO yang berstatus "AKTIF".
-- **Create (Order):**
-  - Klik salah satu Sesi PO.
-  - Tambahkan beberapa item ke keranjang belanja.
-  - Buka keranjang, lalu lanjutkan ke proses checkout.
-  - Isi form pemesanan (Nama & No. WhatsApp) dan kirim pesanan.
-  - Verifikasi bahwa Anda diarahkan ke halaman konfirmasi.
-- **Verifikasi di Admin:** Kembali ke dasbor admin, buka halaman manajemen pesanan (jika sudah ada) dan pastikan pesanan baru dari guest tadi tercatat di sistem.
+| Kategori             | Teknologi                           |
+| -------------------- | ----------------------------------- |
+| **Framework**        | Next.js 14 (App Router), React 18   |
+| **Styling**          | Tailwind CSS, shadcn/ui             |
+| **Database**         | Vercel Postgres (Neon) & Prisma ORM |
+| **Autentikasi**      | JWT (Custom Implementation), bcrypt |
+| **State Management** | React Context (Cart, Auth)          |
+| **Form Handling**    | React Hook Form + Zod validation    |
+| **Deployment**       | Vercel                              |
 
 ---
 
 ## 🚀 Menjalankan Proyek Secara Lokal
 
-Berikut adalah panduan untuk setup dan menjalankan proyek ini di lingkungan lokal.
-
 ### Prasyarat
 
 - Node.js (v18 atau lebih baru)
-- pnpm (atau package manager lain, namun `pnpm-lock.yaml` tersedia)
-- Akun Vercel dan Neon untuk database PostgreSQL
+- pnpm (atau npm/yarn)
+- Database PostgreSQL (bisa pakai Neon/Vercel)
 
 ### Langkah-langkah Instalasi
 
-1.  **Clone repository:**
+1. **Clone repository:**
 
-    ```bash
-    git clone [https://github.com/URL_REPO_ANDA.git](https://github.com/URL_REPO_ANDA.git)
-    cd dapurmama
-    ```
+   ```bash
+   git clone [https://github.com/zidandp/dapurmama.git]
+   cd dapurmama
+   ```
 
-2.  **Install dependensi:**
+2. **Install dependensi:**
 
-    ```bash
-    pnpm install
-    ```
+   ```bash
+   npm install
+   ```
 
-3.  **Setup Environment Variables:**
+3. **Setup Environment Variables:**
 
-    - Buat salinan dari `.env.example` dan beri nama `.env`.
-      ```bash
-      cp .env.example .env
-      ```
-    - Isi semua variabel yang dibutuhkan di dalam file `.env`, terutama `DATABASE_URL` dari Vercel/Neon dan `ADMIN_INVITATION_CODE` (buat kode rahasia Anda sendiri).
+   ```bash
+   cp .env.example .env
+   ```
 
-4.  **Migrasi Database:**
+   Isi variabel di `.env`:
 
-    - Jalankan perintah Prisma untuk menyinkronkan skema Anda dengan database Neon. Ini akan membuat semua tabel yang dibutuhkan.
-      ```bash
-      pnpm prisma migrate dev
-      ```
+   **📋 Cara mendapatkan konfigurasi database:**
 
-5.  **(Opsional) Seed Database:**
+   1. **Buat akun di [Neon](https://neon.tech)**
+   2. **Buat database baru** di dashboard Neon
+   3. **Copy connection strings** dari dashboard Neon
+   4. **Ganti semua placeholder** (`your_user`, `your_password`, dll) dengan nilai sebenarnya dari Neon
 
-    - Jika Anda ingin mengisi database dengan data awal, jalankan seed script.
-      ```bash
-      pnpm prisma db seed
-      ```
+4. **Setup Database:**
 
-6.  **Jalankan Server Development:**
-    ```bash
-    pnpm dev
-    ```
-    Aplikasi sekarang akan berjalan di `http://localhost:3000`.
+   ```bash
+   pnpm prisma migrate dev
+   pnpm prisma db seed    # (opsional, untuk data awal)
+   ```
+
+5. **Jalankan Development Server:**
+   ```bash
+   pnpm dev
+   ```
+   Aplikasi akan berjalan di `http://localhost:3000`
 
 ---
 
 ## 📂 Struktur Proyek
 
-- **`/app/admin`**: Berisi semua halaman dan layout yang dilindungi untuk dasbor admin.
-- **`/app/api`**: Berisi semua API Route untuk backend, diorganisir berdasarkan resource (products, orders, dll).
-- **`/app/(publik)`**: Berisi semua halaman publik yang bisa diakses oleh pelanggan (Home, Katalog, Tentang, dll).
-- **`/components`**: Berisi semua komponen React yang digunakan ulang, diorganisir berdasarkan fitur atau kategori (layout, ui, products, dll).
-- **`/lib`**: Berisi logika bisnis, koneksi database (Prisma client), definisi tipe, dan fungsi utilitas.
-- **`/prisma`**: Berisi skema database (`schema.prisma`) dan file migrasi.
+```
+├── app/
+│   ├── admin/           # Protected admin area
+│   │   ├── dashboard/   # Analytics dashboard
+│   │   ├── produk/      # Product management
+│   │   ├── po-sessions/ # PO session management
+│   │   ├── orders/      # Order management
+│   │   └── login/       # Admin authentication
+│   ├── api/             # Backend API routes
+│   ├── track/           # Public order tracking
+│   ├── katalog/         # Product catalog
+│   ├── tentang/         # About page
+│   └── kontak/          # Contact page
+├── components/          # Reusable React components
+├── lib/                 # Business logic & utilities
+├── prisma/              # Database schema & migrations
+└── hooks/               # Custom React hooks
+```
 
 ---
 

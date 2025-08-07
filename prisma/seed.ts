@@ -1,31 +1,35 @@
-import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
-
-const prisma = new PrismaClient();
+import { seedAdmin } from "./seeds/admin-seed";
+import { seedProducts } from "./seeds/products-seed";
 
 async function main() {
-  // Create admin user
-  const hashedPassword = await bcrypt.hash("admin123", 12);
+  console.log("🌱 Starting database seeding...\n");
 
-  const admin = await prisma.user.upsert({
-    where: { email: "admin@example.com" },
-    update: {},
-    create: {
-      email: "admin@example.com",
-      password: hashedPassword,
-      name: "Admin Dapur Mama",
-      role: "ADMIN",
-    },
-  });
+  try {
+    // Seed admin user
+    await seedAdmin();
+    console.log("");
 
-  console.log("✅ Admin user created:", admin);
+    // Seed products
+    const productResult = await seedProducts();
+
+    console.log("\n🎉 All seeding completed successfully!");
+    console.log(`📊 Final summary:`);
+    console.log(`   👤 Admin users: 1`);
+    console.log(`   🍰 Products: ${productResult.created}`);
+    console.log(`   📦 Categories: ${productResult.categories}`);
+  } catch (error) {
+    console.error("❌ Seeding failed:", error);
+    throw error;
+  }
 }
 
 main()
   .catch((e) => {
-    console.error("❌ Error seeding admin:", e);
+    console.error("❌ Error during seeding:", e);
     process.exit(1);
   })
   .finally(async () => {
+    const { PrismaClient } = require("@prisma/client");
+    const prisma = new PrismaClient();
     await prisma.$disconnect();
   });
