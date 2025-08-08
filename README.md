@@ -115,7 +115,7 @@ Aplikasi ini memiliki dua alur pengguna utama: Admin (Pengelola) dan Pelanggan.
 
 2. **Login Admin:**
 
-   - Email: `admin@dapurmama.com`
+   - Email: `admin@example.com`
    - Password: `admin123`
    - Atau buat akun baru di `/admin/register` dengan kode undangan
 
